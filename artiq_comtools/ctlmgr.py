@@ -222,11 +222,12 @@ class ControllerDB:
 
 
 class ControllerManager(TaskObject):
-    def __init__(self, server, port, retry_master):
+    def __init__(self, server, port, retry_master, host_filter):
         self.server = server
         self.port = port
         self.retry_master = retry_master
         self.controller_db = ControllerDB()
+        self.host_filter = host_filter
 
     async def _do(self):
         try:
@@ -235,9 +236,10 @@ class ControllerManager(TaskObject):
             while True:
                 try:
                     def set_host_filter():
-                        s = subscriber.writer.get_extra_info("socket")
-                        localhost = s.getsockname()[0]
-                        self.controller_db.set_host_filter(localhost)
+                        if self.host_filter is None:
+                            s = subscriber.writer.get_extra_info("socket")
+                            self.host_filter = s.getsockname()[0]
+                        self.controller_db.set_host_filter(self.host_filter)
                     await subscriber.connect(self.server, self.port,
                                              set_host_filter)
                     try:

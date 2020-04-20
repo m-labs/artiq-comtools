@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 
 from sipyco.pc_rpc import simple_server_loop
 from sipyco import common_args
@@ -13,6 +14,9 @@ class Dummy:
 
     def ping(self):
         return True
+
+    def get_os_environ(self):
+        return dict(os.environ)
 
 
 def get_argparser():

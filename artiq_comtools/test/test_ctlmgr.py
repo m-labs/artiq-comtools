@@ -88,7 +88,7 @@ class ControllerCase(unittest.TestCase):
                 timeout -= dt
         raise asyncio.TimeoutError
 
-    def test_start_ping_stop_controller(self):
+    async def start_dummy_controller(self, environment_overrides=None):
         entry = {
             "type": "controller",
             "host": "::1",
@@ -97,10 +97,24 @@ class ControllerCase(unittest.TestCase):
                         + " -m artiq_comtools.test.dummy_controller "
                         + "-p {port}")
         }
+        if environment_overrides is not None:
+            entry["environment"] = environment_overrides
+        await self.start("dummy_controller", entry)
+        return await self.get_client(entry["host"], entry["port"])
+
+    def test_start_ping_stop_controller(self):
         async def test():
-            await self.start("dummy_controller", entry)
-            remote = await self.get_client(entry["host"], entry["port"])
+            remote = await self.start_dummy_controller()
             await remote.ping()
+
+        self.loop.run_until_complete(test())
+
+    def test_start_controller_with_environment_override(self):
+        async def test():
+            env = {"TOTALLY_UNIQUE_TEST_ENV_VAR": "42"}
+            remote = await self.start_dummy_controller(env)
+            remote_env = await remote.get_os_environ()
+            assert set(env.items()).issubset(set(remote_env.items()))
 
         self.loop.run_until_complete(test())
 

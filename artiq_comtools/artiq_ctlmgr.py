@@ -32,6 +32,9 @@ def get_argparser():
     parser.add_argument(
         "--retry-master", default=5.0, type=float,
         help="retry timer for reconnecting to master")
+    parser.add_argument(
+        "--host-filter", default=None, help="IP address of controllers to launch "
+        "(local address of master connection by default)")
     common_args.simple_network_args(parser, [("control", "control", 3249)])
     return parser
 
@@ -65,7 +68,7 @@ def main():
     atexit_register_coroutine(logfwd.stop)
 
     ctlmgr = ControllerManager(args.server, args.port_notify,
-                               args.retry_master)
+                               args.retry_master, args.host_filter)
     ctlmgr.start()
     atexit_register_coroutine(ctlmgr.stop)
 

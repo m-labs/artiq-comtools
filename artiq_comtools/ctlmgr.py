@@ -26,6 +26,7 @@ class Controller:
         self.ping_timer = ddb_entry.get("ping_timer", 30)
         self.ping_timeout = ddb_entry.get("ping_timeout", 30)
         self.term_timeout = ddb_entry.get("term_timeout", 30)
+        self.environment = ddb_entry.get("environment", {})
 
         self.retry_timer_cur = self.retry_timer
         self.retry_now = Condition()
@@ -80,9 +81,12 @@ class Controller:
             while True:
                 logger.info("Starting controller %s with command: %s",
                             self.name, self.command)
+                if self.environment:
+                    logger.info("(environment overrides: %s)", self.environment)
                 try:
                     env = os.environ.copy()
                     env["PYTHONUNBUFFERED"] = "1"
+                    env.update(self.environment)
                     self.process = await asyncio.create_subprocess_exec(
                         *shlex.split(self.command),
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,

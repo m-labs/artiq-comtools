@@ -81,10 +81,7 @@ def main():
                                              args.port_control))
     atexit_register_coroutine(rpc_server.stop)
 
-    try:
-        loop.run_until_complete(rpc_server.wait_terminate())
-    except KeyboardInterrupt:
-        pass
+    loop.run_until_complete(rpc_server.wait_terminate())
 
 
 if __name__ == "__main__":

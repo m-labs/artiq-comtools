@@ -185,6 +185,10 @@ class Controllers:
             if (isinstance(v, dict) and v["type"] == "controller" and
                     self.host_filter in get_ip_addresses(v["host"]) and
                     "command" in v):
+                for k_, v_ in v.items():
+                    while isinstance(v_, str) and v_.startswith("@") and v_[1:] in v:
+                        v_ = v[v_[1:]]
+                    v[k_] = v_
                 args = {k: v[k] for k in v if k not in ["type", "command", "host"]}
                 v["command"] = v["command"].format(name=k,
                                                    bind=self.host_filter,

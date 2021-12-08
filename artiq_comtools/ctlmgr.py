@@ -10,7 +10,6 @@ from sipyco.pc_rpc import AsyncioClient
 from sipyco.logging_tools import LogParser
 from sipyco.asyncio_tools import TaskObject, Condition
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -186,9 +185,10 @@ class Controllers:
             if (isinstance(v, dict) and v["type"] == "controller" and
                     self.host_filter in get_ip_addresses(v["host"]) and
                     "command" in v):
+                args = {k: v[k] for k in v if k not in ["type", "command", "host"]}
                 v["command"] = v["command"].format(name=k,
                                                    bind=self.host_filter,
-                                                   port=v["port"])
+                                                   **args)
                 self.queue.put_nowait(("set", (k, v)))
                 self.active_or_queued.add(k)
         except:

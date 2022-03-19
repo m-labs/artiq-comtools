@@ -188,7 +188,7 @@ class Controllers:
                     "command" in v):
                 v["command"] = v["command"].format(name=k,
                                                    bind=self.host_filter,
-                                                   port=v["port"])
+                                                   **v)
                 self.queue.put_nowait(("set", (k, v)))
                 self.active_or_queued.add(k)
         except:

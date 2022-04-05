@@ -1,5 +1,7 @@
 from setuptools import setup, find_packages
 
+# Depends on sipyco, numpy, aiohttp
+
 setup(
     name="artiq-comtools",
     version="1.0",
@@ -7,7 +9,6 @@ setup(
     url="https://m-labs.hk/artiq",
     description="Lightweight ARTIQ communication tools",
     license="LGPLv3+",
-    install_requires=["setuptools", "sipyco", "numpy", "aiohttp"],
     packages=find_packages(),
     entry_points={
         "console_scripts": [

@@ -72,7 +72,6 @@ def format_influxdb(v, tag=True):
             v = v.replace(i, "\\" + i)
         return v
     else:
-        print("Dict: {}".format(json.dumps(v)))
         return json.dumps(v)
 
 

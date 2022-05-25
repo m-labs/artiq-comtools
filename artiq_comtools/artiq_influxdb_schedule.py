@@ -71,7 +71,7 @@ def format_influxdb(v, tag=True):
             v = v.replace(i, "\\" + i)
         return v
     else:
-        return "\"{}\"".format(v.replace('"', '\\"'))
+        return "\"{}\"".format(v.replace('\\', '\\\\').replace('"', '\\"'))
 
 
 class DBWriter(TaskObject):

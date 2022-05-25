@@ -73,7 +73,7 @@ def format_influxdb(v):
     if np.issubdtype(type(v), np.floating):
         return "float={}".format(v)
     if np.issubdtype(type(v), np.str_):
-        return "str=\"{}\"".format(v.replace('"', '\\"'))
+        return "str=\"{}\"".format(v.replace('\\', '\\\\').replace('"', '\\"'))
     return "pyon=\"{}\"".format(pyon.encode(v).replace('"', '\\"'))
 
 

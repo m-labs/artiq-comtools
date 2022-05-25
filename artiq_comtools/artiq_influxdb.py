@@ -219,7 +219,6 @@ class Filter:
 
 
 def main():
-    print("HHHHHHHHHHHHHHHH")
     args = get_argparser().parse_args()
     common_args.init_logger_from_args(args)
 

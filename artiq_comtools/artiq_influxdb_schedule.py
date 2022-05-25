@@ -5,7 +5,6 @@ import logging
 import asyncio
 import atexit
 import time
-import json
 
 import aiohttp
 import numpy as np
@@ -72,7 +71,9 @@ def format_influxdb(v, tag=True):
             v = v.replace(i, "\\" + i)
         return v
     else:
-        return json.dumps(v)
+        v = "\"{}\"".format(v.replace('"', '\\"'))
+        v = "{}".format(v.replace('\\\\', '\\'))
+        return v
 
 
 class DBWriter(TaskObject):

@@ -73,7 +73,7 @@ def format_influxdb(v):
     if np.issubdtype(type(v), np.floating):
         return "float={}".format(v)
     if np.issubdtype(type(v), np.str_):
-        return "str=\"{}\"".format(v.replace('"', '\\"'))
+        return "str=\"{}\"".format(v.replace('"', '\\"').replace('\\\\', '\\'))
     return "pyon=\"{}\"".format(pyon.encode(v).replace('"', '\\"'))
 
 
@@ -219,6 +219,7 @@ class Filter:
 
 
 def main():
+    print("HHHHHHHHHHHHHHHH")
     args = get_argparser().parse_args()
     common_args.init_logger_from_args(args)
 

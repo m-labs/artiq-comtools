@@ -12,7 +12,7 @@ import numpy as np
 import aiohttp
 
 from sipyco import common_args
-from sipyco.asyncio_tools import TaskObject, atexit_register_coroutine
+from sipyco.asyncio_tools import TaskObject, atexit_register_coroutine, SignalHandler
 from sipyco.sync_struct import Subscriber
 from sipyco.pc_rpc import Server
 from sipyco import pyon
@@ -224,6 +224,9 @@ def main():
 
     loop = asyncio.get_event_loop()
     atexit.register(loop.close)
+    signal_handler = SignalHandler()
+    signal_handler.setup()
+    atexit.register(signal_handler.teardown)
 
     writer = DBWriter(args.baseurl_db,
                       args.user_db, args.password_db,
@@ -242,7 +245,11 @@ def main():
     reader.start()
     atexit_register_coroutine(reader.stop)
 
-    loop.run_until_complete(rpc_server.wait_terminate())
+    _, pending = loop.run_until_complete(asyncio.wait(
+        [signal_handler.wait_terminate(), rpc_server.wait_terminate()],
+        return_when=asyncio.FIRST_COMPLETED))
+    for task in pending:
+        task.cancel()
 
 
 if __name__ == "__main__":

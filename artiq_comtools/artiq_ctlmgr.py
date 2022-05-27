@@ -9,7 +9,7 @@ import platform
 from sipyco.pc_rpc import Server
 from sipyco.logging_tools import LogForwarder, SourceFilter
 from sipyco import common_args
-from sipyco.asyncio_tools import atexit_register_coroutine
+from sipyco.asyncio_tools import atexit_register_coroutine, SignalHandler
 
 from artiq_comtools.ctlmgr import ControllerManager
 
@@ -54,6 +54,9 @@ def main():
 
     loop = asyncio.get_event_loop()
     atexit.register(loop.close)
+    signal_handler = SignalHandler()
+    signal_handler.setup()
+    atexit.register(signal_handler.teardown)
 
     logfwd = LogForwarder(args.server, args.port_logging,
                           args.retry_master)
@@ -76,7 +79,11 @@ def main():
                                              args.port_control))
     atexit_register_coroutine(rpc_server.stop)
 
-    loop.run_until_complete(rpc_server.wait_terminate())
+    _, pending = loop.run_until_complete(asyncio.wait(
+        [signal_handler.wait_terminate(), rpc_server.wait_terminate()],
+        return_when=asyncio.FIRST_COMPLETED))
+    for task in pending:
+        task.cancel()
 
 
 if __name__ == "__main__":

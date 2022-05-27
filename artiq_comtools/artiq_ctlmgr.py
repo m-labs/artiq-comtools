@@ -3,7 +3,6 @@
 import asyncio
 import atexit
 import argparse
-import os
 import logging
 import platform
 
@@ -53,11 +52,7 @@ def main():
     console_handler.addFilter(source_adder)
     root_logger.addHandler(console_handler)
 
-    if os.name == "nt":
-        loop = asyncio.ProactorEventLoop()
-        asyncio.set_event_loop(loop)
-    else:
-        loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
     atexit.register(loop.close)
 
     logfwd = LogForwarder(args.server, args.port_logging,

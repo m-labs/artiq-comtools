@@ -52,7 +52,8 @@ def main():
     console_handler.addFilter(source_adder)
     root_logger.addHandler(console_handler)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     atexit.register(loop.close)
     signal_handler = SignalHandler()
     signal_handler.setup()

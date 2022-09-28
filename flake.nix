@@ -11,19 +11,18 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         deps = [ pkgs.python3Packages.numpy pkgs.python3Packages.aiohttp sipyco.packages.${system}.sipyco ];
-      in rec {
-        packages = {
+      in {
+        packages = rec {
           artiq-comtools = pkgs.python3Packages.buildPythonPackage {
             pname = "artiq-comtools";
             version = "1.1";
             src = self;
             propagatedBuildInputs = deps;
           };
+          default = artiq-comtools;
         };
 
-        defaultPackage = packages.artiq-comtools;
-
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           name = "artiq-comtools-dev-shell";
           buildInputs = [
             (pkgs.python3.withPackages(ps: deps))

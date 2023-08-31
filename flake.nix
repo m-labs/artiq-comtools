@@ -15,7 +15,7 @@
         packages = rec {
           artiq-comtools = pkgs.python3Packages.buildPythonPackage {
             pname = "artiq-comtools";
-            version = "1.1";
+            version = "1.2";
             src = self;
             propagatedBuildInputs = deps;
           };

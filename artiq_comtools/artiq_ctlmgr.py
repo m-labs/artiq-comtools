@@ -81,7 +81,8 @@ def main():
     atexit_register_coroutine(rpc_server.stop)
 
     _, pending = loop.run_until_complete(asyncio.wait(
-        [signal_handler.wait_terminate(), rpc_server.wait_terminate()],
+        [asyncio.create_task(signal_handler.wait_terminate()),
+         asyncio.create_task(rpc_server.wait_terminate())],
         return_when=asyncio.FIRST_COMPLETED))
     for task in pending:
         task.cancel()

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="artiq-comtools",
-    version="1.0",
+    version="1.3",
     author="M-Labs",
     url="https://m-labs.hk/artiq",
     description="Lightweight ARTIQ communication tools",

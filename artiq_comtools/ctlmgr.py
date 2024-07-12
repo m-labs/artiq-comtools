@@ -67,7 +67,7 @@ class Controller:
                 logger.debug("pinging controller %s", self.name)
                 ok = await self._ping()
                 if not ok:
-                    logger.warning("Controller %s ping failed", self.name)
+                    logger.warning("Controller %s ping failed (controller misconfigured or crashed, or ping() not implemented)", self.name)
                     await self._terminate()
                     return
             else:

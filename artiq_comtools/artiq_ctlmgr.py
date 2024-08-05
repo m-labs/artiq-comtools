@@ -80,6 +80,7 @@ def main():
                                              args.port_control))
     atexit_register_coroutine(rpc_server.stop)
 
+    print("ARTIQ controller manager is now running.")
     _, pending = loop.run_until_complete(asyncio.wait(
         [loop.create_task(signal_handler.wait_terminate()),
          loop.create_task(rpc_server.wait_terminate())],

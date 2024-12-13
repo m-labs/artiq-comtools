@@ -89,8 +89,7 @@ class Controller:
                     env.update(self.environment)
                     self.process = await asyncio.create_subprocess_exec(
                         *shlex.split(self.command),
-                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                        env=env, start_new_session=True)
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
                     asyncio.ensure_future(
                         LogParser(self._get_log_source).stream_task(
                             self.process.stdout))

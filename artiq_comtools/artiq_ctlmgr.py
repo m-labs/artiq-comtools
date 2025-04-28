@@ -9,7 +9,7 @@ import platform
 from sipyco.pc_rpc import Server
 from sipyco.logs import LogForwarder, SourceFilter
 from sipyco import common_args
-from sipyco.tools import atexit_register_coroutine, SignalHandler
+from sipyco.tools import atexit_register_coroutine, SignalHandler, SimpleSSLConfig
 
 from artiq_comtools.ctlmgr import ControllerManager
 
@@ -28,6 +28,13 @@ def get_argparser():
     parser.add_argument(
         "--port-logging", default=1066, type=int,
         help="TCP port to connect to for logging")
+    parser.add_argument(
+        "--ssl", nargs=3, metavar=('CERT', 'KEY', 'PEER'), default=None,
+        help="Enable SSL for master connections: "
+             "CERT: client certificate file, "
+             "KEY: client private key, "
+             "PEER: master certificate to trust "
+             "(default: %(default)s)")
     parser.add_argument(
         "--retry-master", default=5.0, type=float,
         help="retry timer for reconnecting to master")
@@ -58,9 +65,10 @@ def main():
     signal_handler = SignalHandler()
     signal_handler.setup()
     atexit.register(signal_handler.teardown)
+    ssl_config = SimpleSSLConfig(*args.ssl) if args.ssl else None
 
     logfwd = LogForwarder(args.server, args.port_logging,
-                          args.retry_master)
+                          args.retry_master, ssl_config=ssl_config)
     logfwd.addFilter(source_adder)
     root_logger.addHandler(logfwd)
     logfwd.start()
@@ -68,7 +76,7 @@ def main():
 
     ctlmgr = ControllerManager(args.server, args.port_notify,
                                args.retry_master, args.host_filter,
-                               loop=loop)
+                               loop=loop, ssl_config=ssl_config)
     ctlmgr.start()
     atexit_register_coroutine(ctlmgr.stop)
 

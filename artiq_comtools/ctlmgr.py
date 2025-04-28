@@ -8,7 +8,7 @@ import os
 from sipyco.sync_struct import Subscriber
 from sipyco.pc_rpc import AsyncioClient
 from sipyco.logging_tools import LogParser
-from sipyco.tools import TaskObject, Condition
+from sipyco.tools import TaskObject, Condition, SimpleSSLConfig
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class Controller:
 
         self.host = ddb_entry["host"]
         self.port = ddb_entry["port"]
+        self.simple_ssl_config = ddb_entry.get("simple_ssl_config")
         self.ping_timer = ddb_entry.get("ping_timer", 30)
         self.ping_timeout = ddb_entry.get("ping_timeout", 30)
         self.term_timeout = ddb_entry.get("term_timeout", 30)
@@ -39,7 +40,12 @@ class Controller:
 
     async def call(self, method, *args, **kwargs):
         remote = AsyncioClient()
-        await remote.connect_rpc(self.host, self.port, None)
+        ssl_config = None
+        if self.simple_ssl_config:
+            ssl_config = SimpleSSLConfig(self.simple_ssl_config["client_cert"],
+                                         self.simple_ssl_config["client_key"],
+                                         self.simple_ssl_config["server_cert"])
+        await remote.connect_rpc(self.host, self.port, None, ssl_config)
         try:
             targets, _ = remote.get_rpc_id()
             await remote.select_rpc_target(targets[0])
@@ -187,8 +193,16 @@ class Controllers:
             if (isinstance(v, dict) and v["type"] == "controller" and
                     self.host_filter in get_ip_addresses(v["host"]) and
                     "command" in v):
+                ssl_dir = os.environ.get("ARTIQ_SSL_DIR")
+                if "simple_ssl_config" in v:
+                    for key, filename in v["simple_ssl_config"].items():
+                        if "{ARTIQ_SSL_DIR}" in filename:
+                            if not ssl_dir:
+                                raise ValueError("ARTIQ_SSL_DIR environment variable must be set when using {ARTIQ_SSL_DIR} in SSL certificate paths")
+                            v["simple_ssl_config"][key] = filename.format(ARTIQ_SSL_DIR=ssl_dir)
                 v["command"] = v["command"].format(name=k,
                                                    bind=self.host_filter,
+                                                   ARTIQ_SSL_DIR=ssl_dir,
                                                    **v)
                 self.queue.put_nowait(("set", (k, v)))
                 self.active_or_queued.add(k)
@@ -227,12 +241,13 @@ class ControllerDB:
 
 
 class ControllerManager(TaskObject):
-    def __init__(self, server, port, retry_master, host_filter, loop):
+    def __init__(self, server, port, retry_master, host_filter, loop, ssl_config=None):
         self.server = server
         self.port = port
         self.retry_master = retry_master
         self.controller_db = ControllerDB(loop=loop)
         self.host_filter = host_filter
+        self.ssl_config = ssl_config
 
     async def _do(self):
         try:
@@ -246,7 +261,7 @@ class ControllerManager(TaskObject):
                             self.host_filter = s.getsockname()[0]
                         self.controller_db.set_host_filter(self.host_filter)
                     await subscriber.connect(self.server, self.port,
-                                             set_host_filter)
+                                             set_host_filter, self.ssl_config)
                     try:
                         await asyncio.wait_for(subscriber.receive_task, None)
                     finally:

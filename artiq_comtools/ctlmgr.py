@@ -8,7 +8,7 @@ import os
 from sipyco.sync_struct import Subscriber
 from sipyco.pc_rpc import AsyncioClient
 from sipyco.logging_tools import LogParser
-from sipyco.tools import TaskObject, Condition
+from sipyco.tools import TaskObject, Condition, SimpleSSLConfig
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,8 @@ class Controller:
 
         self.host = ddb_entry["host"]
         self.port = ddb_entry["port"]
+        self.ssl_args = ddb_entry.get("ssl_args")
+        self._validate_ssl_config()
         self.ping_timer = ddb_entry.get("ping_timer", 30)
         self.ping_timeout = ddb_entry.get("ping_timeout", 30)
         self.term_timeout = ddb_entry.get("term_timeout", 30)
@@ -39,7 +41,12 @@ class Controller:
 
     async def call(self, method, *args, **kwargs):
         remote = AsyncioClient()
-        await remote.connect_rpc(self.host, self.port, None)
+        ssl_config = None
+        if self.ssl_args:
+            ssl_config = SimpleSSLConfig(self.ssl_args["client_cert"],
+                                         self.ssl_args["client_key"],
+                                         self.ssl_args["server_cert"])
+        await remote.connect_rpc(self.host, self.port, None, ssl_config)
         try:
             targets, _ = remote.get_rpc_id()
             await remote.select_rpc_target(targets[0])
@@ -72,6 +79,16 @@ class Controller:
                     return
             else:
                 break
+
+    def _validate_ssl_config(self):
+        has_ssl_in_command = "--ssl" in self.command
+        has_ssl_args = (self.ssl_args and isinstance(self.ssl_args, dict) and
+                        all(field in self.ssl_args for field in ["client_cert", "client_key", "server_cert"]))
+        if has_ssl_in_command and not has_ssl_args:
+            logger.error("Controller %s: SSL command detected but ssl_args not configured. "
+                         "Please add ssl_args with client_cert, client_key, and server_cert to device database.", self.name)
+        elif has_ssl_args and not has_ssl_in_command:
+            logger.error("Controller %s: ssl_args configured but command does not use --ssl", self.name)
 
     def _get_log_source(self):
         return "controller({})".format(self.name)
@@ -186,8 +203,14 @@ class Controllers:
             if (isinstance(v, dict) and v["type"] == "controller" and
                     self.host_filter in get_ip_addresses(v["host"]) and
                     "command" in v):
+                ssl_dir = os.environ.get("SSL_DIR", "")
+                if "ssl_args" in v:
+                    for key, path in v["ssl_args"].items():
+                        if isinstance(path, str) and "{SSL_DIR}" in path and ssl_dir:
+                            v["ssl_args"][key] = path.format(SSL_DIR=ssl_dir)
                 v["command"] = v["command"].format(name=k,
                                                    bind=self.host_filter,
+                                                   SSL_DIR=ssl_dir,
                                                    **v)
                 self.queue.put_nowait(("set", (k, v)))
                 self.active_or_queued.add(k)
@@ -226,12 +249,13 @@ class ControllerDB:
 
 
 class ControllerManager(TaskObject):
-    def __init__(self, server, port, retry_master, host_filter):
+    def __init__(self, server, port, retry_master, host_filter, ssl_config=None):
         self.server = server
         self.port = port
         self.retry_master = retry_master
         self.controller_db = ControllerDB()
         self.host_filter = host_filter
+        self.ssl_config = ssl_config
 
     async def _do(self):
         try:
@@ -245,7 +269,7 @@ class ControllerManager(TaskObject):
                             self.host_filter = s.getsockname()[0]
                         self.controller_db.set_host_filter(self.host_filter)
                     await subscriber.connect(self.server, self.port,
-                                             set_host_filter)
+                                             set_host_filter, self.ssl_config)
                     try:
                         await asyncio.wait_for(subscriber.receive_task, None)
                     finally:

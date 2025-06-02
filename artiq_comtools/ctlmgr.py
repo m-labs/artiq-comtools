@@ -45,7 +45,7 @@ class Controller:
             await remote.select_rpc_target(targets[0])
             r = await getattr(remote, method)(*args, **kwargs)
         finally:
-            remote.close_rpc()
+            await remote.close_rpc()
         return r
 
     async def _ping(self):

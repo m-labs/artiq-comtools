@@ -67,7 +67,7 @@ class ControllerCase(unittest.TestCase):
         await remote.connect_rpc(host, port, None)
         targets, _ = remote.get_rpc_id()
         await remote.select_rpc_target(targets[0])
-        self.addCleanup(remote.close_rpc)
+        self.addCleanup(self.loop.run_until_complete, remote.close_rpc())
         return remote
 
     async def wait_for_ping(self, host, port, retries=5, timeout=2):

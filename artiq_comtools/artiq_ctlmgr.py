@@ -9,7 +9,7 @@ import platform
 from sipyco.pc_rpc import Server
 from sipyco.logging_tools import LogForwarder, SourceFilter
 from sipyco import common_args
-from sipyco.asyncio_tools import atexit_register_coroutine, SignalHandler
+from sipyco.tools import atexit_register_coroutine, SignalHandler
 
 from artiq_comtools.ctlmgr import ControllerManager
 

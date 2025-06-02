@@ -8,7 +8,7 @@ import os
 from sipyco.sync_struct import Subscriber
 from sipyco.pc_rpc import AsyncioClient
 from sipyco.logging_tools import LogParser
-from sipyco.asyncio_tools import TaskObject, Condition
+from sipyco.tools import TaskObject, Condition
 
 
 logger = logging.getLogger(__name__)

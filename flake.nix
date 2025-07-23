@@ -17,6 +17,8 @@
             pname = "artiq-comtools";
             version = "1.3";
             src = self;
+            pyproject = true;
+            build-system = [ pkgs.python3Packages.setuptools ];
             propagatedBuildInputs = deps;
           };
           default = artiq-comtools;

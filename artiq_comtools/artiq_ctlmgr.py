@@ -5,6 +5,9 @@ import atexit
 import argparse
 import logging
 import platform
+import signal
+import sys
+import os
 
 from sipyco.pc_rpc import Server
 from sipyco.logging_tools import LogForwarder, SourceFilter
@@ -12,6 +15,48 @@ from sipyco import common_args
 from sipyco.tools import atexit_register_coroutine, SignalHandler
 
 from artiq_comtools.ctlmgr import ControllerManager
+
+
+# Work around MSYS2 terminal closure signal issue.
+# See: https://github.com/msys2/msys2-runtime/issues/267
+class MSYS2SignalHandler(SignalHandler):
+    """Signal handler with parent process monitoring for MSYS2 environments.
+
+    Detects terminal closure by monitoring the parent shell process,
+    ensuring reliable shutdown when signals are not delivered properly.
+    """
+    def __init__(self):
+        super().__init__()
+        try:
+            self._parent_pid = os.getppid()
+        except Exception:
+            raise RuntimeError("Failed to get parent process ID")
+
+    def _check_parent_alive(self):
+        try:
+            os.kill(self._parent_pid, 0)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+
+    async def wait_terminate(self):
+        async def monitor_parent():
+            while True:
+                await asyncio.sleep(2.0)
+                if not self._check_parent_alive():
+                    print("Terminal closed, terminating...")
+                    os.kill(os.getpid(), signal.SIGTERM)
+                    break
+
+        parent_task = asyncio.create_task(monitor_parent())
+        try:
+            await super().wait_terminate()
+        finally:
+            parent_task.cancel()
+            try:
+                await parent_task
+            except asyncio.CancelledError:
+                pass
 
 
 def get_argparser():
@@ -55,7 +100,10 @@ def main():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     atexit.register(loop.close)
-    signal_handler = SignalHandler()
+    if sys.platform == "win32" and "MSYSTEM" in os.environ:
+        signal_handler = MSYS2SignalHandler()
+    else:
+        signal_handler = SignalHandler()
     signal_handler.setup()
     atexit.register(signal_handler.teardown)
 

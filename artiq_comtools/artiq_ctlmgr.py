@@ -7,7 +7,7 @@ import logging
 import platform
 
 from sipyco.pc_rpc import Server
-from sipyco.logging_tools import LogForwarder, SourceFilter
+from sipyco.logs import LogForwarder, SourceFilter
 from sipyco import common_args
 from sipyco.tools import atexit_register_coroutine, SignalHandler
 

@@ -91,10 +91,10 @@ class Controller:
                         *shlex.split(self.command),
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                         env=env, start_new_session=True)
-                    asyncio.ensure_future(
+                    self.log_stdout_task = asyncio.create_task(
                         LogParser(self._get_log_source).stream_task(
                             self.process.stdout))
-                    asyncio.ensure_future(
+                    self.log_stderr_task = asyncio.create_task(
                         LogParser(self._get_log_source).stream_task(
                             self.process.stderr))
                     await self._wait_and_ping()

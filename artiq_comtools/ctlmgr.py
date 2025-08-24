@@ -31,7 +31,7 @@ class Controller:
         self.retry_timer_cur = self.retry_timer
         self.retry_now = Condition()
         self.process = None
-        self.launch_task = asyncio.ensure_future(self.launcher())
+        self.launch_task = asyncio.create_task(self.launcher())
 
     async def end(self):
         self.launch_task.cancel()
@@ -164,7 +164,7 @@ class Controllers:
         self.active_or_queued = set()
         self.queue = asyncio.Queue()
         self.active = dict()
-        self.process_task = asyncio.ensure_future(self._process())
+        self.process_task = asyncio.create_task(self._process())
 
     async def _process(self):
         while True:

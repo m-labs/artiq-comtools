@@ -67,7 +67,8 @@ def main():
     atexit_register_coroutine(logfwd.stop)
 
     ctlmgr = ControllerManager(args.server, args.port_notify,
-                               args.retry_master, args.host_filter)
+                               args.retry_master, args.host_filter,
+                               loop=loop)
     ctlmgr.start()
     atexit_register_coroutine(ctlmgr.stop)
 

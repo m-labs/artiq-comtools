@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Controller:
-    def __init__(self, name, ddb_entry):
+    def __init__(self, name, ddb_entry, loop):
         self.name = name
         self.command = ddb_entry["command"]
         self.retry_timer = ddb_entry.get("retry_timer", 5)
@@ -31,7 +31,7 @@ class Controller:
         self.retry_timer_cur = self.retry_timer
         self.retry_now = Condition()
         self.process = None
-        self.launch_task = asyncio.create_task(self.launcher())
+        self.launch_task = loop.create_task(self.launcher())
 
     async def end(self):
         self.launch_task.cancel()
@@ -159,12 +159,13 @@ def get_ip_addresses(host):
 
 
 class Controllers:
-    def __init__(self):
+    def __init__(self, loop):
         self.host_filter = None
         self.active_or_queued = set()
         self.queue = asyncio.Queue()
         self.active = dict()
-        self.process_task = asyncio.create_task(self._process())
+        self.process_task = loop.create_task(self._process())
+        self.loop = loop
 
     async def _process(self):
         while True:
@@ -173,7 +174,7 @@ class Controllers:
                 k, ddb_entry = param
                 if k in self.active:
                     await self.active[k].end()
-                self.active[k] = Controller(k, ddb_entry)
+                self.active[k] = Controller(k, ddb_entry, loop=self.loop)
             elif action == "del":
                 await self.active[param].end()
                 del self.active[param]
@@ -211,8 +212,8 @@ class Controllers:
 
 
 class ControllerDB:
-    def __init__(self):
-        self.current_controllers = Controllers()
+    def __init__(self, loop):
+        self.current_controllers = Controllers(loop=loop)
 
     def set_host_filter(self, host_filter):
         self.current_controllers.host_filter = host_filter
@@ -226,11 +227,11 @@ class ControllerDB:
 
 
 class ControllerManager(TaskObject):
-    def __init__(self, server, port, retry_master, host_filter):
+    def __init__(self, server, port, retry_master, host_filter, loop):
         self.server = server
         self.port = port
         self.retry_master = retry_master
-        self.controller_db = ControllerDB()
+        self.controller_db = ControllerDB(loop=loop)
         self.host_filter = host_filter
 
     async def _do(self):

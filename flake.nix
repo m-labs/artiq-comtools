@@ -25,6 +25,7 @@
             makeWrapperArgs = [
               ''--run 'if [ ! -z "$NIX_PYTHONPREFIX" ]; then export PATH=$NIX_PYTHONPREFIX/bin:$PATH;fi' ''
             ];
+            checkPhase = "python -m unittest discover artiq_comtools.test -v";
           };
           default = artiq-comtools;
         };

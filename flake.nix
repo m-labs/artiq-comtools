@@ -1,7 +1,7 @@
 {
   description = "Lightweight ARTIQ communication tools";
 
-  inputs.nixpkgs.url = github:NixOS/nixpkgs/nixos-25.05;
+  inputs.nixpkgs.url = github:NixOS/nixpkgs/nixos-25.11;
   inputs.sipyco.url = github:m-labs/sipyco;
   inputs.sipyco.inputs.nixpkgs.follows = "nixpkgs";
   inputs.flake-utils.url = github:numtide/flake-utils;

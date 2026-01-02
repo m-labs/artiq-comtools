@@ -4,6 +4,7 @@ import subprocess
 import shlex
 import socket
 import os
+import ssl
 
 from sipyco.sync_struct import Subscriber
 from sipyco.pc_rpc import AsyncioClient
@@ -266,6 +267,10 @@ class ControllerManager(TaskObject):
                         await asyncio.wait_for(subscriber.receive_task, None)
                     finally:
                         await subscriber.close()
+                except (ssl.SSLError) as e:
+                    logger.error("SSL failed (%s: %s)",
+                                   e.__class__.__name__, str(e))
+                    raise
                 except (ConnectionAbortedError, ConnectionError,
                         ConnectionRefusedError, ConnectionResetError) as e:
                     logger.warning("Connection to master failed (%s: %s)",

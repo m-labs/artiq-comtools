@@ -32,7 +32,7 @@ def get_argparser():
                "entry followed by the addition of all entries.")
     group = parser.add_argument_group("master")
     group.add_argument(
-        "--server-master", default="::1",
+        "--server-master", default="localhost",
         help="hostname or IP of the master to connect to")
     group.add_argument(
         "--port-master", default=3250, type=int,

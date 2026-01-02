@@ -53,7 +53,7 @@ class ControllerCase(unittest.TestCase):
         self.addCleanup(self.loop.close)
 
         self.controllers = Controllers()
-        self.controllers.host_filter = "::1"
+        self.controllers.host_filter = "localhost"
         self.addCleanup(
             self.loop.run_until_complete, self.controllers.shutdown())
 
@@ -91,7 +91,7 @@ class ControllerCase(unittest.TestCase):
     async def start_dummy_controller(self, environment_overrides=None):
         entry = {
             "type": "controller",
-            "host": "::1",
+            "host": "localhost",
             "port": 1068,
             "command": (sys.executable.replace("\\", "\\\\")
                         + " -m artiq_comtools.test.dummy_controller "
@@ -121,7 +121,7 @@ class ControllerCase(unittest.TestCase):
     def test_no_command_controller(self):
         entry = {
             "type": "controller",
-            "host": "::1",
+            "host": "localhost",
             "port": 1068
         }
         with expect_no_log_messages(logging.ERROR):

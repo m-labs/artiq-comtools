@@ -20,7 +20,7 @@ def get_argparser():
     common_args.verbosity_args(parser)
 
     parser.add_argument(
-        "-s", "--server", default="::1",
+        "-s", "--server", default="localhost",
         help="hostname or IP of the master to connect to")
     parser.add_argument(
         "--port-notify", default=3250, type=int,

@@ -191,7 +191,7 @@ class Controllers:
     def __setitem__(self, k, v):
         try:
             if (isinstance(v, dict) and v["type"] == "controller" and
-                    self.host_filter in get_ip_addresses(v["host"]) and
+                    bool(get_ip_addresses(self.host_filter) & get_ip_addresses(v["host"])) and
                     "command" in v):
                 ssl_dir = os.environ.get("ARTIQ_SSL_DIR")
                 if "simple_ssl_config" in v:

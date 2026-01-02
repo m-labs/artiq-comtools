@@ -52,7 +52,7 @@ class ControllerCase(unittest.TestCase):
         asyncio.set_event_loop(self.loop)
         self.addCleanup(self.loop.close)
 
-        self.controllers = Controllers()
+        self.controllers = Controllers(loop=self.loop)
         self.controllers.host_filter = "localhost"
         self.addCleanup(
             self.loop.run_until_complete, self.controllers.shutdown())
